@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "lib": ["ES2023"],
+    "types": ["node", "vite/client", "@electron-forge/plugin-vite/forge-vite-env"],
+    "paths": {
+      "@shared/*": ["./src/shared/*"]
+    }
+  },
+  "include": ["src/main", "src/model-worker", "src/preload", "src/shared", "scripts", "forge.config.ts", "vite.*.ts", "vitest.config.ts"]
+}

@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            label: mac-arm64
+          - os: windows-latest
+            label: windows-x64
+          - os: ubuntu-latest
+            label: linux-amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      # Builds are unsigned until signing certificates are added as repository secrets.
+      - run: npm run make
+      # The landing page links to releases/latest/download/<name>, so every file gets a name without the version.
+      - name: Collect files under stable names
+        shell: bash
+        run: |
+          mkdir release
+          copy() { local found; found=$(find out/make -type f -name "$1" | head -1); [ -n "$found" ] && cp "$found" "release/$2"; }
+          case "${{ matrix.label }}" in
+            mac-arm64)
+              copy "*.dmg" Laya-Notes-mac-arm64.dmg
+              copy "*darwin*.zip" Laya-Notes-mac-arm64.zip ;;
+            windows-x64)
+              copy "*Setup.exe" Laya-Notes-windows-x64-setup.exe
+              copy "*win32*.zip" Laya-Notes-windows-x64.zip ;;
+            linux-amd64)
+              copy "*.deb" Laya-Notes-linux-amd64.deb ;;
+          esac
+          ls -la release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}
+          path: release/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    # A draft with the platforms that built is still useful; it is checked before it is published.
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          # Published by hand after the files are checked.
+          draft: true
+          generate_release_notes: true
+          files: release/*

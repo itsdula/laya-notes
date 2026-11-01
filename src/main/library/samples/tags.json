@@ -1,0 +1,24 @@
+{
+  "customTags": [
+    {
+      "name": "cooking",
+      "instructions": "Is this note about cooking, food, or a recipe?"
+    },
+    {
+      "name": "travel",
+      "instructions": "Is this note about a trip, travel, or a place away from home?"
+    },
+    {
+      "name": "code",
+      "instructions": "Is this note about programming, software, or an API?"
+    },
+    {
+      "name": "journal",
+      "instructions": "Is this note a personal journal entry or a reflection on the writer's day?"
+    },
+    {
+      "name": "learning",
+      "instructions": "Is this note explaining a concept the writer is trying to understand?"
+    }
+  ]
+}

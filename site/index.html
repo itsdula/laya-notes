@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laya Notes — Markdown notes that tag themselves, on your computer</title>
+    <meta
+      name="description"
+      content="Laya Notes keeps your notes as plain Markdown files in a folder you choose, and tags them with a small AI model that runs on your own computer."
+    />
+    <link rel="canonical" href="https://itsdula.github.io/laya-notes/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Laya Notes" />
+    <meta property="og:description" content="Markdown notes that tag themselves, with a small AI model that runs on your own computer." />
+    <meta property="og:url" content="https://itsdula.github.io/laya-notes/" />
+    <meta property="og:image" content="https://itsdula.github.io/laya-notes/apple-touch-icon.png" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="download.js" defer></script>
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="#"><img class="logo" src="favicon.svg" alt="" width="28" height="28" />Laya Notes</a>
+      <nav>
+        <a href="#how">How it works</a>
+        <a href="#privacy">Privacy</a>
+        <a class="button small" href="https://github.com/itsdula/laya-notes/releases/latest" data-download-link>Download</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Notes that tag themselves.<br />On your computer.</h1>
+        <p class="lead">
+          Laya Notes keeps every note as a plain Markdown file in a folder you choose. A small AI model, running on your own machine, reads each note
+          and adds the tags that fit.
+        </p>
+        <div class="actions">
+          <div class="split" data-download>
+            <a class="button" href="https://github.com/itsdula/laya-notes/releases/latest" data-download-link data-download-label>Download for Mac, Windows or Linux</a>
+            <button class="button toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="downloads" aria-label="Choose another download" hidden>
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </button>
+            <div class="menu" id="downloads" hidden>
+              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-mac-arm64.dmg" data-os="mac">
+                <span>macOS</span><small>Apple Silicon · .dmg</small>
+              </a>
+              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-mac-arm64.zip">
+                <span>macOS</span><small>Apple Silicon · .zip</small>
+              </a>
+              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-windows-x64-setup.exe" data-os="windows">
+                <span>Windows</span><small>Installer · .exe</small>
+              </a>
+              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-windows-x64.zip">
+                <span>Windows</span><small>Portable · .zip</small>
+              </a>
+              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-linux-amd64.deb" data-os="linux">
+                <span>Linux</span><small>Debian, Ubuntu · .deb</small>
+              </a>
+              <a href="https://github.com/itsdula/laya-notes/releases/latest"><span>All releases</span><small>GitHub</small></a>
+            </div>
+          </div>
+          <a class="button ghost" href="https://github.com/itsdula/laya-notes">Source code</a>
+        </div>
+        <p class="fine">Free. No account. Works offline after a one-time model download.</p>
+        <p class="fine hint" data-download-hint hidden></p>
+
+        <figure class="window" aria-label="The Laya Notes window">
+          <div class="chrome"><span></span><span></span><span></span></div>
+          <div class="pane">
+            <aside>
+              <p class="group">Notes</p>
+              <p>API Sketch <small>code · learning</small></p>
+              <p>Sunday Journal <small>journal</small></p>
+              <p>Weeknight Pasta <small>cooking</small></p>
+              <p class="group">Trips</p>
+              <p class="active">Tokyo Weekend <small>travel</small></p>
+            </aside>
+            <article>
+              <div class="tags"><span class="chip">travel</span><span class="ai">✦ AI Tag</span></div>
+              <h2>Tokyo Weekend</h2>
+              <p>Land at Haneda on Friday evening and take the monorail into the city. The hotel is a short walk from a subway station in Yanaka.</p>
+              <p>Saturday is a slow walk through the neighborhood, a long lunch, and a bookstore that stays open late.</p>
+            </article>
+          </div>
+        </figure>
+      </section>
+
+      <section id="how" class="grid">
+        <div>
+          <h3>Your notes are files</h3>
+          <p>
+            Each note is a <code>.md</code> file; each folder is a real folder. Open them in Finder or Explorer, back them up, or keep them in a folder your own
+            sync service already covers.
+          </p>
+        </div>
+        <div>
+          <h3>Tags are questions</h3>
+          <p>
+            A tag is a yes-or-no question, like “Is this note about a trip?” Laya answers every question for a note in one pass and keeps the tags it is
+            confident about.
+          </p>
+        </div>
+        <div>
+          <h3>Nothing to sign up for</h3>
+          <p>Install it and pick a folder. There is no account, no server and no subscription. Change the folder or the look of the app any time in Settings.</p>
+        </div>
+      </section>
+
+      <section id="privacy" class="privacy">
+        <h2>Your writing stays on your computer</h2>
+        <p>
+          The model that suggests tags runs inside the app. The only download is the model itself, about 1.6 GB, once per computer. After that, Laya
+          Notes works with no internet connection, and your notes are never uploaded anywhere.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>Laya Notes uses <a href="https://huggingface.co/receptron/laya-onnx">Laya</a>, a decision model by Convai Innovations.</p>
+      <p><a href="https://github.com/itsdula/laya-notes">Source on GitHub</a> · MIT License</p>
+    </footer>
+  </body>
+</html>

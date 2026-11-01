@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laya Notes · dev monitor</title>
+    <style>
+      :root {
+        --bg: #fafafa;
+        --fg: #171717;
+        --muted: #737373;
+        --panel: #ffffff;
+        --border: #e5e5e5;
+        --hover: #f4f4f5;
+        --debug: #a3a3a3;
+        --info: #2563eb;
+        --warn: #d97706;
+        --error: #dc2626;
+        --ok: #16a34a;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0a0a0a;
+          --fg: #ededed;
+          --muted: #8a8a8a;
+          --panel: #141414;
+          --border: #262626;
+          --hover: #1c1c1c;
+          --info: #60a5fa;
+          --warn: #fbbf24;
+          --error: #f87171;
+          --ok: #4ade80;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--fg);
+        font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel);
+      }
+      h1 {
+        margin: 0 8px 0 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 9px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--muted);
+      }
+      .status::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+      .status[data-state="running"]::before {
+        background: var(--ok);
+      }
+      .status[data-state="starting"]::before,
+      .status[data-state="restarting"]::before {
+        background: var(--warn);
+      }
+      .status[data-state="stopped"]::before {
+        background: var(--error);
+      }
+      .spacer {
+        flex: 1;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 9px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        background: var(--hover);
+      }
+      .levels button[aria-pressed="false"] {
+        opacity: 0.45;
+      }
+      input[type="search"] {
+        width: 220px;
+      }
+      .levels {
+        display: inline-flex;
+        gap: 4px;
+      }
+      .levels button[data-level="debug"] {
+        color: var(--debug);
+      }
+      .levels button[data-level="info"] {
+        color: var(--info);
+      }
+      .levels button[data-level="warn"] {
+        color: var(--warn);
+      }
+      .levels button[data-level="error"] {
+        color: var(--error);
+      }
+      main {
+        flex: 1;
+        overflow-y: auto;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 12px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 96px 52px 76px 1fr;
+        gap: 10px;
+        padding: 3px 14px;
+        border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+        cursor: default;
+      }
+      .row:hover {
+        background: var(--hover);
+      }
+      .row.has-attributes {
+        cursor: pointer;
+      }
+      .time,
+      .source {
+        color: var(--muted);
+      }
+      .level {
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .level.debug {
+        color: var(--debug);
+      }
+      .level.info {
+        color: var(--info);
+      }
+      .level.warn {
+        color: var(--warn);
+      }
+      .level.error {
+        color: var(--error);
+      }
+      .row.error {
+        background: color-mix(in srgb, var(--error) 7%, transparent);
+      }
+      .row.warn {
+        background: color-mix(in srgb, var(--warn) 6%, transparent);
+      }
+      .body {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .attributes {
+        grid-column: 4;
+        margin: 4px 0 6px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--panel);
+        color: var(--muted);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .empty {
+        padding: 40px;
+        color: var(--muted);
+        text-align: center;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      footer {
+        display: flex;
+        gap: 16px;
+        padding: 6px 14px;
+        border-top: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Laya Notes · dev monitor</h1>
+      <span class="status" id="status" data-state="starting">connecting…</span>
+      <button id="restart" title="Rebuild the main process and relaunch the app">Restart app</button>
+      <button id="stop" title="Quit Electron; the monitor keeps running">Stop app</button>
+      <span class="spacer"></span>
+      <span class="levels" role="group" aria-label="Severity">
+        <button data-level="debug" aria-pressed="false">debug</button>
+        <button data-level="info" aria-pressed="true">info</button>
+        <button data-level="warn" aria-pressed="true">warn</button>
+        <button data-level="error" aria-pressed="true">error</button>
+      </span>
+      <select id="source" aria-label="Source"><option value="">all sources</option></select>
+      <input id="search" type="search" placeholder="Filter text" aria-label="Filter text" />
+      <button id="pause" aria-pressed="false">Pause</button>
+      <button id="clear">Clear</button>
+    </header>
+    <main id="log" aria-live="off"><div class="empty">Waiting for log records…</div></main>
+    <footer>
+      <span id="counts"></span>
+      <span class="spacer"></span>
+      <span>OTLP/HTTP logs endpoint: <code id="endpoint"></code></span>
+    </footer>
+    <script>
+      const MAX_ROWS = 5000;
+      const records = [];
+      const sources = new Set();
+      const levels = new Set(["info", "warn", "error"]);
+      const log = document.getElementById("log");
+      const statusEl = document.getElementById("status");
+      const sourceSelect = document.getElementById("source");
+      const search = document.getElementById("search");
+      const pauseButton = document.getElementById("pause");
+      let paused = false;
+      let pending = [];
+
+      document.getElementById("endpoint").textContent = `${location.origin}/v1/logs`;
+
+      function time(ms) {
+        const date = new Date(ms);
+        return date.toLocaleTimeString([], { hour12: false }) + "." + String(date.getMilliseconds()).padStart(3, "0");
+      }
+
+      function visible(record) {
+        if (!levels.has(record.severity)) return false;
+        if (sourceSelect.value && record.source !== sourceSelect.value) return false;
+        const needle = search.value.trim().toLowerCase();
+        if (needle && !record.body.toLowerCase().includes(needle) && !record.source.includes(needle)) return false;
+        return true;
+      }
+
+      function row(record) {
+        const element = document.createElement("div");
+        element.className = `row ${record.severity}`;
+        const attributes = { ...record.attributes };
+        delete attributes["service.name"];
+        delete attributes["log.iostream"];
+        if (typeof attributes["laya.detail"] === "string") {
+          try {
+            attributes["laya.detail"] = JSON.parse(attributes["laya.detail"]);
+          } catch {}
+        }
+        const hasAttributes = Object.keys(attributes).length > 0;
+        if (hasAttributes) element.classList.add("has-attributes");
+        for (const [className, text] of [
+          ["time", time(record.time)],
+          [`level ${record.severity}`, record.severity],
+          ["source", record.source],
+          ["body", record.body],
+        ]) {
+          const cell = document.createElement("span");
+          cell.className = className;
+          cell.textContent = text;
+          element.append(cell);
+        }
+        if (hasAttributes) {
+          element.addEventListener("click", () => {
+            const open = element.querySelector(".attributes");
+            if (open) return open.remove();
+            if (getSelection().toString()) return;
+            const detail = document.createElement("div");
+            detail.className = "attributes";
+            detail.textContent = JSON.stringify(attributes, null, 2);
+            element.append(detail);
+          });
+        }
+        return element;
+      }
+
+      function atBottom() {
+        return log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+      }
+
+      function append(batch) {
+        const stick = atBottom();
+        const fragment = document.createDocumentFragment();
+        for (const record of batch) if (visible(record)) fragment.append(row(record));
+        if (fragment.childNodes.length) {
+          log.querySelector(".empty")?.remove();
+          log.append(fragment);
+          while (log.childElementCount > MAX_ROWS) log.firstElementChild.remove();
+          if (stick) log.scrollTop = log.scrollHeight;
+        }
+        updateCounts();
+      }
+
+      function render() {
+        log.replaceChildren();
+        const shown = records.filter(visible).slice(-MAX_ROWS);
+        if (!shown.length) {
+          log.innerHTML = '<div class="empty">No records match.</div>';
+        } else {
+          const fragment = document.createDocumentFragment();
+          for (const record of shown) fragment.append(row(record));
+          log.append(fragment);
+          log.scrollTop = log.scrollHeight;
+        }
+        updateCounts();
+      }
+
+      function updateCounts() {
+        const count = { error: 0, warn: 0 };
+        for (const record of records) if (record.severity in count) count[record.severity]++;
+        document.getElementById("counts").textContent = `${records.length} records · ${count.error} errors · ${count.warn} warnings${paused ? ` · ${pending.length} waiting` : ""}`;
+      }
+
+      function addSources(batch) {
+        let changed = false;
+        for (const record of batch) {
+          if (!sources.has(record.source)) {
+            sources.add(record.source);
+            changed = true;
+          }
+        }
+        if (!changed) return;
+        const selected = sourceSelect.value;
+        sourceSelect.replaceChildren(new Option("all sources", ""), ...[...sources].sort().map((source) => new Option(source, source)));
+        sourceSelect.value = selected;
+      }
+
+      function receive(batch) {
+        records.push(...batch);
+        if (records.length > MAX_ROWS * 2) records.splice(0, records.length - MAX_ROWS * 2);
+        addSources(batch);
+        if (paused) {
+          pending.push(...batch);
+          updateCounts();
+        } else {
+          append(batch);
+        }
+      }
+
+      function connect() {
+        const events = new EventSource("/events");
+        let first = true;
+        events.addEventListener("records", (event) => {
+          const batch = JSON.parse(event.data);
+          if (first) {
+            first = false;
+            records.length = 0;
+            log.replaceChildren();
+          }
+          receive(batch);
+        });
+        events.addEventListener("status", (event) => {
+          const status = JSON.parse(event.data);
+          statusEl.dataset.state = status.state;
+          statusEl.textContent = status.state === "stopped" && status.exitCode ? `stopped (exit ${status.exitCode})` : status.state;
+        });
+        events.onerror = () => {
+          statusEl.dataset.state = "stopped";
+          statusEl.textContent = "dev script not running";
+        };
+      }
+
+      for (const button of document.querySelectorAll(".levels button")) {
+        button.addEventListener("click", () => {
+          const level = button.dataset.level;
+          if (levels.has(level)) levels.delete(level);
+          else levels.add(level);
+          button.setAttribute("aria-pressed", String(levels.has(level)));
+          render();
+        });
+      }
+      sourceSelect.addEventListener("change", render);
+      search.addEventListener("input", render);
+      pauseButton.addEventListener("click", () => {
+        paused = !paused;
+        pauseButton.setAttribute("aria-pressed", String(paused));
+        pauseButton.textContent = paused ? "Resume" : "Pause";
+        if (!paused) {
+          const batch = pending;
+          pending = [];
+          append(batch);
+        }
+      });
+      document.getElementById("clear").addEventListener("click", () => {
+        records.length = 0;
+        pending = [];
+        render();
+      });
+      for (const [id, path] of [
+        ["restart", "/api/restart"],
+        ["stop", "/api/stop"],
+      ]) {
+        document.getElementById(id).addEventListener("click", () => fetch(path, { method: "POST", headers: { "x-laya-dev": "1" } }));
+      }
+
+      connect();
+    </script>
+  </body>
+</html>
