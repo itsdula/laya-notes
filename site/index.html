@@ -1,126 +1,616 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Laya Notes — Markdown notes that tag themselves, on your computer</title>
-    <meta
-      name="description"
-      content="Laya Notes keeps your notes as plain Markdown files in a folder you choose, and tags them with a small AI model that runs on your own computer."
-    />
-    <link rel="canonical" href="https://itsdula.github.io/laya-notes/" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Laya Notes" />
-    <meta property="og:description" content="Markdown notes that tag themselves, with a small AI model that runs on your own computer." />
-    <meta property="og:url" content="https://itsdula.github.io/laya-notes/" />
-    <meta property="og:image" content="https://itsdula.github.io/laya-notes/apple-touch-icon.png" />
-    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-    <link rel="stylesheet" href="styles.css" />
-    <script src="download.js" defer></script>
-  </head>
-  <body>
-    <header class="top">
-      <a class="brand" href="#"><img class="logo" src="favicon.svg" alt="" width="28" height="28" />Laya Notes</a>
-      <nav>
-        <a href="#how">How it works</a>
-        <a href="#privacy">Privacy</a>
-        <a class="button small" href="https://github.com/itsdula/laya-notes/releases/latest" data-download-link>Download</a>
-      </nav>
-    </header>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Laya Notes is a private, local-first Markdown notes app with on-device AI tagging.">
+  <meta name="theme-color" content="#080808">
+  <title>Laya Notes — Your thoughts, still yours</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      color-scheme: dark;
+      --black: #080808;
+      --near: #101010;
+      --panel: #151515;
+      --line: #303030;
+      --mid: #777;
+      --muted: #a4a4a4;
+      --white: #f4f4f2;
+      --paper: #e9e9e7;
+      --paper-line: #c6c6c3;
+      --ink: #151515;
+      --max: 1180px;
+      --ease: cubic-bezier(.2,.78,.2,1);
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      overflow-x: clip;
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--sans);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+      opacity: .025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+    }
+    a { color: inherit; }
+    button { color: inherit; font: inherit; }
+    a, button { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+    ::selection { background: #fff; color: #000; }
+    .wrap { width: min(var(--max), calc(100% - 48px)); margin-inline: auto; }
+    .skip {
+      position: fixed;
+      z-index: 9999;
+      top: 12px;
+      left: 12px;
+      padding: 10px 14px;
+      background: #fff;
+      color: #000;
+      transform: translateY(-150%);
+      transition: transform .2s ease;
+    }
+    .skip:focus { transform: none; }
 
-    <main>
-      <section class="hero">
-        <h1>Notes that tag themselves.<br />On your computer.</h1>
-        <p class="lead">
-          Laya Notes keeps every note as a plain Markdown file in a folder you choose. A small AI model, running on your own machine, reads each note
-          and adds the tags that fit.
-        </p>
+    .cursor {
+      position: fixed;
+      z-index: 9999;
+      top: 0;
+      left: 0;
+      display: none;
+      width: 32px;
+      height: 32px;
+      border: 1px solid #fff;
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      mix-blend-mode: difference;
+      transform: translate3d(-100px,-100px,0) translate(-50%,-50%);
+      transition: width .24s var(--ease), height .24s var(--ease), background .24s var(--ease), opacity .18s;
+      will-change: transform;
+    }
+    .cursor::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: 3px; height: 3px; border-radius: 50%; background: #fff; transform: translate(-50%,-50%); }
+    .cursor.visible { opacity: 1; }
+    .cursor.active { width: 62px; height: 62px; background: #fff; }
+    .cursor.active::after { opacity: 0; }
+    .cursor.magnify {
+      width: 156px;
+      height: 156px;
+      border: 2px solid #fff;
+      background-color: #0b0b0b;
+      background-repeat: no-repeat;
+      box-shadow: 0 18px 50px #000c, inset 0 0 0 1px #0008;
+      mix-blend-mode: normal;
+    }
+    .cursor.magnify::after { opacity: 0; }
+    @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
+      .cursor { display: block; }
+      html.has-cursor, html.has-cursor a, html.has-cursor button, html.has-cursor [data-journey-track] { cursor: none !important; }
+    }
+
+    .site-header {
+      position: absolute;
+      z-index: 20;
+      inset: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px clamp(20px,4vw,64px);
+    }
+    .brand { display: inline-flex; align-items: center; gap: 11px; font-size: 15px; font-weight: 700; text-decoration: none; }
+    .brand img { width: 30px; height: 30px; border-radius: 8px; box-shadow: 0 6px 18px #0009; }
+    .site-nav { display: flex; align-items: center; gap: clamp(18px,3vw,34px); }
+    .site-nav a { color: #bdbdbd; font-size: 13px; text-decoration: none; transition: color .2s; }
+    .site-nav a:hover { color: #fff; }
+    .site-nav .nav-download { padding: 9px 14px; border: 1px solid #555; border-radius: 99px; color: #fff; }
+
+    .eyebrow, .section-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 24px;
+      font: 650 11px/1 var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 28px; height: 1px; background: currentColor; }
+    .section-label span { color: var(--mid); font-weight: 500; }
+    .hero {
+      position: relative;
+      min-height: max(820px,100svh);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: minmax(0,.84fr) minmax(500px,1.16fr);
+      align-items: center;
+      gap: 3vw;
+      padding: 120px max(5vw,calc((100vw - var(--max))/2)) 86px;
+      isolation: isolate;
+    }
+    .hero::after { content: ""; position: absolute; z-index: -2; inset: auto -10% -36% 30%; height: 70%; border: 1px solid #272727; border-radius: 50%; transform: rotate(-9deg); }
+    .hero-copy { z-index: 4; max-width: 590px; animation: enter .9s .1s both var(--ease); }
+    .hero .eyebrow { color: #fff; }
+    h1 {
+      margin: 0;
+      font-size: clamp(60px,7.1vw,114px);
+      font-weight: 560;
+      line-height: .87;
+      letter-spacing: -.075em;
+    }
+    h1 span { display: block; color: #777; font-weight: 440; }
+    .hero-lede { max-width: 510px; margin: 30px 0 0; color: #b5b5b5; font-size: clamp(16px,1.5vw,20px); line-height: 1.58; letter-spacing: -.012em; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; margin-top: 34px; }
+    .primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 20px;
+      min-height: 54px;
+      padding: 0 18px 0 21px;
+      border: 1px solid #fff;
+      border-radius: 4px;
+      background: #fff;
+      color: #000;
+      font-size: 14px;
+      font-weight: 740;
+      text-decoration: none;
+      transition: transform .24s var(--ease), box-shadow .24s, background .24s;
+    }
+    .primary:hover { transform: translateY(-3px); background: #ddd; box-shadow: 0 14px 35px #ffffff1d; }
+    .primary b { font-size: 19px; font-weight: 400; transition: transform .2s; }
+    .primary:hover b { transform: translateX(4px); }
+    .source { padding: 16px; color: #aaa; font-size: 13px; text-underline-offset: 4px; text-decoration-color: #555; }
+    .trust { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 22px 0 0; color: #777; font: 11px/1.5 var(--mono); }
+    .trust span::before { content: "✓"; margin-right: 7px; color: #bbb; }
+
+    .hero-scene { position: relative; z-index: 2; min-height: 560px; height: min(73vw,690px); max-height: 75vh; perspective: 1300px; animation: scene-in 1.2s .18s both var(--ease); }
+    .window {
+      position: absolute;
+      margin: 0;
+      overflow: hidden;
+      aspect-ratio: 1014/659;
+      border: 1px solid #383838;
+      border-radius: 12px;
+      background: #0e0e0e;
+      box-shadow: 0 48px 100px #000c, inset 0 0 0 1px #ffffff08;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+    .window img { display: block; width: 100%; height: 100%; background: #0b0b0b; object-fit: cover; object-position: center; }
+    .window-main { z-index: 3; top: 19%; left: -2%; width: 93%; transform: translateZ(25px) rotateY(-6deg) rotateX(2deg) rotateZ(-1deg); }
+    .window-back { z-index: 2; top: 2%; right: -3%; width: 73%; opacity: .66; transform: translateZ(-115px) rotateY(-6deg) rotateZ(4deg); }
+    .orbit-tag { position: absolute; z-index: 6; padding: 8px 11px; border: 1px solid #555; border-radius: 99px; background: #1a1a1aeb; color: #ddd; font: 10px var(--mono); box-shadow: 0 10px 24px #0008; transition: scale .2s var(--ease),color .2s,background .2s,border-color .2s,box-shadow .2s; }
+    .orbit-tag::before { content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 7px; border-radius: 50%; background: currentColor; }
+    .orbit-tag:hover,.orbit-tag[aria-pressed="true"] { scale: 1.08; border-color: #fff; background: #fff; color: #000; box-shadow: 0 14px 30px #000b; }
+    .orbit-tag:active { scale: .96; }
+    .t1 { top: 12%; left: 0; } .t2 { top: 35%; right: -3%; } .t3 { bottom: 17%; left: -3%; } .t4 { bottom: 3%; left: 35%; }
+    .scroll-cue { position: absolute; left: clamp(20px,4vw,64px); bottom: 30px; display: flex; align-items: center; gap: 12px; color: #666; font: 9px var(--mono); letter-spacing: .14em; text-transform: uppercase; writing-mode: vertical-rl; }
+    .scroll-cue::after { content: ""; width: 1px; height: 44px; background: #444; }
+
+    .manifesto { position: relative; min-height: 100vh; padding: clamp(120px,17vw,230px) 24px; border-top: 1px solid #242424; overflow: hidden; }
+    .manifesto::after { content: ""; position: absolute; right: -150px; bottom: 4%; width: 360px; height: 360px; border: 1px solid #292929; border-radius: 50%; box-shadow: 0 0 0 70px #ffffff05,0 0 0 140px #ffffff02; }
+    .manifesto-inner { position: relative; z-index: 1; max-width: 1040px; margin: auto; }
+    .manifesto blockquote { max-width: 980px; margin: 0; font-size: clamp(40px,6.3vw,88px); font-weight: 480; line-height: 1.04; letter-spacing: -.055em; }
+    .manifesto-line { display: block; overflow: hidden; padding-bottom: .08em; }
+    .manifesto-line > span { display: block; transform: translateY(115%) rotate(.8deg); transform-origin: left bottom; transition: transform 1.05s var(--ease); }
+    .manifesto-line:nth-child(2) > span { color: #666; transition-delay: .13s; }
+    .manifesto.active .manifesto-line > span { transform: none; }
+    .manifesto-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 42px; max-width: 650px; margin: 72px 0 0 auto; color: #999; line-height: 1.72; }
+    .manifesto-meta p { margin: 0; transform: translateY(var(--drift,0)); }
+    .ticker { position: absolute; bottom: 0; left: 0; display: flex; width: max-content; padding: 20px 0 24px; border-top: 1px solid #262626; color: #555; font-size: clamp(20px,3vw,42px); font-weight: 500; letter-spacing: -.04em; text-transform: uppercase; white-space: nowrap; animation: ticker 30s linear infinite; }
+    .ticker span { padding-right: .9em; }
+
+    .story { position: relative; padding: 150px 0 120px; background: var(--paper); color: var(--ink); }
+    .story-head { display: grid; grid-template-columns: .65fr 2fr; gap: 7vw; align-items: end; margin-bottom: 75px; }
+    .story h2, .journey h2, .download h2 { margin: 0; font-size: clamp(50px,7vw,104px); font-weight: 540; line-height: .88; letter-spacing: -.066em; }
+    .story-title p { max-width: 570px; margin: 28px 0 0; color: #606060; font-size: 17px; }
+    .story-layout { display: grid; grid-template-columns: minmax(280px,.8fr) minmax(540px,1.55fr); gap: 7vw; align-items: start; }
+    .story-steps { padding: 10vh 0 24vh; }
+    .story-step { display: block; width: 100%; min-height: 250px; margin: 0 0 20vh; padding: 28px 22px 28px 0; border: 0; border-top: 1px solid #0004; background: transparent; color: var(--ink); text-align: left; opacity: .4; transition: opacity .3s,padding .3s,border-color .3s; }
+    .story-step:last-child { margin-bottom: 0; }
+    .story-step.active { padding-left: 22px; border-color: #000; opacity: 1; }
+    .story-step small { display: block; margin-bottom: 46px; font: 700 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .story-step h3 { margin: 0 0 13px; font-size: clamp(31px,3.2vw,50px); font-weight: 540; line-height: 1; letter-spacing: -.045em; }
+    .story-step p { max-width: 335px; margin: 0; color: #666; font-size: 15px; }
+    .story-visual { position: sticky; top: 70px; }
+    .machine { min-height: 660px; overflow: hidden; border: 1px solid #111; border-radius: 3px; background: #f5f5f3; box-shadow: 16px 18px 0 #0002; }
+    .machine-bar { display: flex; justify-content: space-between; align-items: center; min-height: 60px; padding: 0 28px; border-bottom: 1px solid #0002; font: 700 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .machine-status { display: flex; align-items: center; gap: 8px; }
+    .machine-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #111; }
+    .machine-canvas { position: relative; min-height: 600px; padding: 48px; }
+    .paper { position: relative; z-index: 3; width: min(390px,72%); min-height: 430px; padding: 36px 34px; border: 1px solid #0003; background: #fff; box-shadow: 8px 10px 0 #00000018; transform: rotate(-1.5deg); transition: transform .7s var(--ease),width .7s; }
+    .file-name { display: flex; justify-content: space-between; margin-bottom: 38px; color: #666; font: 700 11px/1 var(--mono); }
+    .paper code { display: block; color: #444; font: 14px/1.9 var(--mono); }
+    .md-heading { color: #000; font-weight: 800; } .md-mark { background: #ddd; }
+    .scan-line { position: absolute; z-index: 5; top: 70px; left: 36px; width: min(390px,72%); border-top: 2px solid #000; opacity: 0; box-shadow: 0 7px 0 #0001; }
+    .model-chip { position: absolute; z-index: 6; top: 95px; right: 40px; display: grid; place-items: center; width: 128px; height: 128px; border-radius: 50%; background: #111; color: #fff; text-align: center; opacity: 0; transform: scale(.7); transition: transform .5s,opacity .4s; }
+    .model-chip strong { display: block; font-size: 24px; font-weight: 540; } .model-chip small { font: 9px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .story-tag { position: absolute; z-index: 7; padding: 8px 12px; border: 1px solid #111; border-radius: 99px; background: #fff; font: 700 11px var(--mono); opacity: 0; transform: scale(.6); transition: transform .45s var(--ease),opacity .3s; }
+    .tag-a { top: 320px; right: 45px; } .tag-b { top: 402px; right: 100px; } .tag-c { top: 500px; right: 38px; }
+    .story-lines { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
+    .story-lines path { fill: none; stroke: #111; stroke-width: 1.5; stroke-dasharray: 230; stroke-dashoffset: 230; transition: stroke-dashoffset .8s; }
+    .machine[data-stage="1"] .model-chip,.machine[data-stage="2"] .model-chip { opacity: 1; transform: scale(1); }
+    .machine[data-stage="1"] .scan-line { opacity: 1; animation: scan 1.8s ease-in-out infinite; }
+    .machine[data-stage="2"] .paper { width: 55%; transform: translate(-5px,15px) rotate(-3deg); }
+    .machine[data-stage="2"] .story-tag { opacity: 1; transform: scale(1); }
+    .machine[data-stage="2"] .tag-b { transition-delay: .12s; } .machine[data-stage="2"] .tag-c { transition-delay: .24s; }
+    .machine[data-stage="2"] .story-lines path { stroke-dashoffset: 0; }
+
+    .journey { position: relative; height: 300vh; overflow: clip; background: #0b0b0b; color: #fff; }
+    .journey > .wrap { position: sticky; top: 0; display: flex; min-height: 100svh; flex-direction: column; justify-content: center; padding-block: 64px; }
+    .journey-head { display: grid; grid-template-columns: 1.6fr .7fr; gap: 7vw; align-items: end; margin-bottom: 44px; }
+    .journey-lead { max-width: 400px; margin: 0 0 8px; color: #aaa; }
+    .journey-track { position: relative; top: -24px; display: flex; gap: 22px; margin-right: calc((100vw - min(var(--max),calc(100vw - 48px)))/-2); padding: 12px max(22vw,260px) 28px 4px; overflow: hidden; scrollbar-width: none; }
+    .journey-track::-webkit-scrollbar { display: none; }
+    .journey-card { position: relative; flex: 0 0 clamp(600px,64vw,820px); min-height: 360px; padding: 34px; overflow: hidden; border: 1px solid #444; border-radius: 4px; background: #eee; color: #111; box-shadow: 10px 12px 0 #ffffff16; scroll-snap-align: start; transform: rotate(var(--rotation)); transition: transform .25s,box-shadow .25s; }
+    .journey-card:nth-child(1) { --rotation:-1deg; } .journey-card:nth-child(2) { --rotation:1.2deg; background: #151515; color: #fff; } .journey-card:nth-child(3) { --rotation:-.7deg; background: #d2d2d2; }
+    .journey-card:hover { transform: translateY(-7px); box-shadow: 14px 18px 0 #ffffff20; }
+    .journey-card header { display: flex; justify-content: space-between; margin-bottom: 70px; }
+    .journey-card small { font: 700 10px var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .journey-card h3 { max-width: 520px; margin: 0 0 18px; font-size: clamp(38px,4.4vw,66px); font-weight: 540; line-height: .9; letter-spacing: -.055em; }
+    .journey-card p { max-width: 500px; margin: 0; color: #666; } .journey-card:nth-child(2) p { color: #aaa; }
+    .card-icon { position: absolute; top: 94px; right: 30px; display: grid; place-items: center; width: 100px; height: 100px; border: 1px solid currentColor; border-radius: 50%; font-size: 33px; }
+    .card-proof { position: absolute; right: 34px; bottom: 30px; padding: 8px 12px; border: 1px solid; font: 700 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; transform: rotate(-3deg); }
+
+    .download { position: relative; overflow: hidden; padding: 145px 0 0; background: #f1f1ef; color: #111; }
+    .download-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(45px,8vw,120px); align-items: start; }
+    .download h2 { max-width: 650px; }
+    .download-copy > p { max-width: 500px; margin: 28px 0 0; color: #666; font-size: 17px; }
+    .signal { position: relative; height: 190px; margin: 50px 0 0; overflow: hidden; border-top: 1px solid #bbb; border-bottom: 1px solid #bbb; }
+    .signal-line { position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: repeating-linear-gradient(90deg,#111 0 7px,transparent 7px 14px); }
+    .signal-pulse { position: absolute; top: 50%; left: 0; width: 14px; height: 14px; border: 2px solid #111; border-radius: 50%; background: #f1f1ef; transform: translate(-50%,-50%); animation: travel 4s var(--ease) infinite; }
+    .signal-offline { position: absolute; inset: 0 0 0 55%; display: grid; place-items: center; background: #111; color: #fff; clip-path: polygon(24% 0,100% 0,100% 100%,0 100%); }
+    .signal-offline span { margin-left: 10%; font: 700 11px var(--mono); letter-spacing: .13em; text-transform: uppercase; }
+    .chooser { border: 1px solid #bbb; background: #fafaf8; box-shadow: 12px 14px 0 #00000012; }
+    .chooser-top { display: flex; justify-content: space-between; align-items: center; min-height: 58px; padding: 0 22px; border-bottom: 1px solid #ccc; font: 700 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+    .chooser-top span:last-child::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; background: #111; }
+    .os-tabs { display: grid; grid-template-columns: repeat(3,1fr); padding: 8px; gap: 8px; border-bottom: 1px solid #ddd; }
+    .os-tab { min-height: 46px; border: 1px solid transparent; background: transparent; color: #666; font-size: 13px; }
+    .os-tab[aria-selected="true"] { border-color: #111; background: #111; color: #fff; }
+    .os-panel { padding: 32px; }
+    .os-panel[hidden] { display: none; }
+    .os-panel h3 { margin: 0 0 8px; font-size: 31px; line-height: 1; letter-spacing: -.04em; }
+    .os-panel p { margin: 0 0 25px; color: #666; font-size: 14px; }
+    .os-download { display: flex; justify-content: space-between; align-items: center; min-height: 62px; padding: 0 20px; background: #111; color: #fff; font-weight: 700; text-decoration: none; transition: background .2s; }
+    .os-download:hover { background: #3a3a3a; }
+    .source-row { display: flex; justify-content: space-between; gap: 25px; margin-top: 22px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
+    .source-row a { color: #111; font-weight: 700; text-underline-offset: 4px; }
+    .offline-proof { display: grid; grid-template-columns: repeat(3,1fr); margin-top: 110px; border-top: 1px solid #bbb; border-bottom: 1px solid #bbb; }
+    .proof { min-height: 170px; padding: 28px; }
+    .proof + .proof { border-left: 1px solid #bbb; }
+    .proof strong { display: block; margin-bottom: 38px; font-size: 38px; font-weight: 540; letter-spacing: -.05em; }
+    .proof span { color: #666; font-size: 13px; }
+    footer { display: flex; justify-content: space-between; gap: 20px; padding: 32px 0; color: #666; font-size: 11px; }
+    footer p { margin: 0; }
+
+    .reveal { opacity: 0; transform: translateY(32px); transition: opacity .8s var(--ease),transform .8s var(--ease); }
+    .reveal.visible,.no-js .reveal { opacity: 1; transform: none; }
+    @keyframes enter { from { opacity: 0; transform: translateY(28px); } }
+    @keyframes scene-in { from { opacity: 0; transform: translate3d(7vw,30px,0) scale(.95); } }
+    @keyframes ticker { to { transform: translateX(-50%); } }
+    @keyframes scan { 0%,100% { transform: translateY(15px); } 50% { transform: translateY(380px); } }
+    @keyframes travel { 0% { left: 0; } 58%,100% { left: 68%; } }
+
+    @media (max-width: 980px) {
+      .hero { height: auto; min-height: 0; grid-template-columns: 1fr; padding-top: 145px; }
+      .hero-copy { max-width: 730px; }
+      .hero-scene { max-height: none; height: min(83vw,680px); margin-top: 25px; }
+      .window-main { left: 3%; width: 91%; } .window-back { right: 1%; width: 68%; }
+      .story-layout { grid-template-columns: minmax(220px,.7fr) minmax(440px,1.3fr); gap: 4vw; }
+      .journey-head,.download-grid { grid-template-columns: 1fr; }
+      .download-grid { gap: 65px; } .chooser { max-width: 690px; }
+    }
+    @media (max-width: 720px) {
+      .wrap { width: min(100% - 32px,620px); }
+      .site-header { padding: 18px 20px; }
+      .site-nav a:not(.nav-download) { display: none; }
+      .hero { padding: 130px 20px 70px; }
+      h1 { font-size: clamp(54px,18vw,78px); }
+      .hero-scene { min-height: 440px; height: 108vw; margin-inline: -25px; }
+      .window-main { top: 25%; left: 2%; width: 96%; } .window-back { top: 5%; right: -2%; width: 72%; }
+      .orbit-tag { padding: 6px 8px; font-size: 8px; } .scroll-cue { display: none; }
+      .manifesto { padding: 110px 20px 140px; }
+      .manifesto-meta { grid-template-columns: 1fr; margin-left: 0; }
+      .story { padding: 110px 0 90px; }
+      .story-head { grid-template-columns: 1fr; gap: 25px; margin-bottom: 45px; }
+      .story-layout { display: flex; flex-direction: column; gap: 40px; }
+      .story-visual { order: 0; top: 12px; z-index: 3; width: 100%; }
+      .story-steps { order: 1; width: 100%; padding: 4vh 0 0; }
+      .story-step { min-height: 205px; margin-bottom: 28vh; padding: 24px; border: 1px solid #bbb; background: #e9e9e7f2; }
+      .story-step.active { padding-left: 24px; }
+      .machine { min-height: 420px; box-shadow: 8px 10px 0 #0002; }
+      .machine-bar { min-height: 48px; padding: 0 18px; }
+      .machine-canvas { min-height: 370px; padding: 24px; }
+      .paper { width: 72%; min-height: 290px; padding: 21px 18px; }
+      .paper code { font-size: 10px; line-height: 1.7; } .file-name { margin-bottom: 20px; font-size: 9px; }
+      .model-chip { top: 64px; right: 18px; width: 87px; height: 87px; } .model-chip strong { font-size: 17px; }
+      .scan-line { top: 48px; left: 24px; width: 72%; }
+      .story-tag { padding: 6px 9px; font-size: 9px; } .tag-a { top: 196px; right: 22px; } .tag-b { top: 252px; right: 65px; } .tag-c { top: 314px; right: 18px; }
+      .journey { height: 260vh; padding: 0; }
+      .journey > .wrap { padding-block: 46px; }
+      .journey-track { margin-right: -16px; padding-right: 40px; }
+      .journey-track { top: -12px; }
+      .journey-card { flex-basis: calc(100vw - 50px); min-height: 360px; padding: 28px 24px; }
+      .journey-card header { margin-bottom: 80px; } .card-icon { top: 88px; right: 22px; width: 78px; height: 78px; font-size: 27px; }
+      .download { padding-top: 110px; }
+      .os-tabs { grid-template-columns: 1fr; } .os-panel { padding: 26px 20px; }
+      .offline-proof { grid-template-columns: 1fr; margin-top: 80px; } .proof + .proof { border-left: 0; border-top: 1px solid #bbb; }
+      footer { flex-direction: column; }
+    }
+    @media (max-width: 430px) {
+      .hero-scene { min-height: 410px; }
+      .actions { align-items: flex-start; flex-direction: column; }
+      .source { padding-left: 4px; }
+      .source-row { flex-direction: column; gap: 8px; }
+      .journey-card h3 { font-size: 42px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *,*::before,*::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+      .reveal { opacity: 1; transform: none; }
+      .manifesto-line > span { transform: none; }
+      .cursor { display: none !important; }
+      body,a,button { cursor: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor" data-cursor aria-hidden="true"></div>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Laya Notes home"><img src="apple-touch-icon.png" width="30" height="30" alt=""><span>Laya Notes</span></a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="#philosophy">Why local</a>
+      <a href="#how">How it works</a>
+      <a class="nav-download" href="#download">Download</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Local-first intelligence</p>
+        <h1 id="hero-title">Think freely.<span>Stay private.</span></h1>
+        <p class="hero-lede">Plain Markdown notes, organized by an AI model that lives on your computer. No account. No cloud. No audience.</p>
         <div class="actions">
-          <div class="split" data-download>
-            <a class="button" href="https://github.com/itsdula/laya-notes/releases/latest" data-download-link data-download-label>Download for Mac, Windows or Linux</a>
-            <button class="button toggle" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="downloads" aria-label="Choose another download" hidden>
-              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
-            </button>
-            <div class="menu" id="downloads" hidden>
-              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-mac-arm64.dmg" data-os="mac">
-                <span>macOS</span><small>Apple Silicon · .dmg</small>
-              </a>
-              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-mac-arm64.zip">
-                <span>macOS</span><small>Apple Silicon · .zip</small>
-              </a>
-              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-windows-x64-setup.exe" data-os="windows">
-                <span>Windows</span><small>Installer · .exe</small>
-              </a>
-              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-windows-x64.zip">
-                <span>Windows</span><small>Portable · .zip</small>
-              </a>
-              <a href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-linux-amd64.deb" data-os="linux">
-                <span>Linux</span><small>Debian, Ubuntu · .deb</small>
-              </a>
-              <a href="https://github.com/itsdula/laya-notes/releases/latest"><span>All releases</span><small>GitHub</small></a>
+          <a class="primary" data-primary-download href="https://github.com/itsdula/laya-notes/releases/latest"><span data-download-label>Download Laya Notes</span><b aria-hidden="true">↘</b></a>
+          <a class="source" href="https://github.com/itsdula/laya-notes">View source ↗</a>
+        </div>
+        <p class="trust"><span>Free &amp; open source</span><span>Works offline</span><span>Your files stay yours</span></p>
+      </div>
+      <div class="hero-scene" aria-label="Two complete views of the Laya Notes desktop application">
+        <figure class="window window-back"><img src="media/app-tokyo-weekend.jpg?v=2" width="1003" height="648" alt="Laya Notes showing a Tokyo Weekend note with the complete notes sidebar"></figure>
+        <figure class="window window-main"><img src="media/app-api-sketch.jpg?v=2" width="1014" height="659" alt="Laya Notes showing an API Sketch Markdown note with folders and tags visible in the sidebar"></figure>
+        <button class="orbit-tag t1" type="button" data-orbit=".018" aria-pressed="false">journal</button><button class="orbit-tag t2" type="button" data-orbit=".025" aria-pressed="false">travel</button><button class="orbit-tag t3" type="button" data-orbit=".014" aria-pressed="false">ideas</button><button class="orbit-tag t4" type="button" data-orbit=".022" aria-pressed="false">research</button>
+      </div>
+      <span class="scroll-cue" aria-hidden="true">Scroll to unfold</span>
+    </section>
+
+    <section class="manifesto" id="philosophy" aria-labelledby="manifesto-title">
+      <div class="manifesto-inner">
+        <p class="eyebrow reveal">Your mind is not a feed</p>
+        <blockquote id="manifesto-title">
+          <span class="manifesto-line"><span>Software should help you remember,</span></span>
+          <span class="manifesto-line"><span>without remembering you.</span></span>
+        </blockquote>
+        <div class="manifesto-meta reveal">
+          <p>Your notes are ordinary <strong>.md files</strong> in a folder you choose. Move them, sync them, or open them in another app.</p>
+          <p>Laya's small AI model runs <strong>entirely on-device</strong>. After one model download, even the internet is optional.</p>
+        </div>
+      </div>
+      <div class="ticker" aria-hidden="true"><span>plain files · local intelligence · lasting ownership · </span><span>plain files · local intelligence · lasting ownership · </span></div>
+    </section>
+
+    <section class="story" id="how" aria-labelledby="story-title">
+      <div class="wrap">
+        <div class="story-head">
+          <p class="section-label reveal">One local pass <span>03</span></p>
+          <div class="story-title"><h2 id="story-title" class="reveal">Watch a note find its place.</h2><p class="reveal">Scroll through the journey from plain Markdown to useful tags. Every step happens on your computer.</p></div>
+        </div>
+        <div class="story-layout">
+          <div class="story-steps" aria-label="How local tagging works">
+            <button class="story-step active" type="button" data-story-step="0" aria-pressed="true"><small>01 · Write</small><h3>It begins as a file.</h3><p>Write normally. The note is Markdown in your folder—not a row locked inside a service.</p></button>
+            <button class="story-step" type="button" data-story-step="1" aria-pressed="false"><small>02 · Read locally</small><h3>The model comes to the note.</h3><p>Laya reads it on-device and answers your tag questions in one pass. Nothing is uploaded.</p></button>
+            <button class="story-step" type="button" data-story-step="2" aria-pressed="false"><small>03 · Connect</small><h3>Related thoughts gather.</h3><p>Confident tags reveal themes across your folder without changing the portable file underneath.</p></button>
+          </div>
+          <div class="story-visual" aria-live="polite">
+            <div class="machine" data-machine data-stage="0">
+              <div class="machine-bar"><span>On this device</span><span class="machine-status">Offline ready</span></div>
+              <div class="machine-canvas">
+                <article class="paper" aria-label="Example Markdown note"><div class="file-name"><span>train-window.md</span><span>PLAIN TEXT</span></div><code><span class="md-heading"># Train window ideas</span><br><br>What if attention is less<br>a spotlight, more a<br><span class="md-mark">garden path?</span><br><br>The landscape moves<br>while the thought stays still.</code></article>
+                <div class="scan-line" aria-hidden="true"></div><div class="model-chip" aria-hidden="true"><span><strong>Laya</strong><small>local model</small></span></div>
+                <span class="story-tag tag-a">attention</span><span class="story-tag tag-b">ideas</span><span class="story-tag tag-c">travel</span>
+                <svg class="story-lines" viewBox="0 0 700 600" preserveAspectRatio="none" aria-hidden="true"><path d="M320 250 C430 240 500 230 610 270"/><path d="M310 315 C440 340 465 385 560 370"/><path d="M300 380 C430 445 520 490 625 490"/></svg>
+              </div>
             </div>
           </div>
-          <a class="button ghost" href="https://github.com/itsdula/laya-notes">Source code</a>
         </div>
-        <p class="fine">Free. No account. Works offline after a one-time model download.</p>
-        <p class="fine hint" data-download-hint hidden></p>
+      </div>
+    </section>
 
-        <figure class="window" aria-label="The Laya Notes window">
-          <div class="chrome"><span></span><span></span><span></span></div>
-          <div class="pane">
-            <aside>
-              <p class="group">Notes</p>
-              <p>API Sketch <small>code · learning</small></p>
-              <p>Sunday Journal <small>journal</small></p>
-              <p>Weeknight Pasta <small>cooking</small></p>
-              <p class="group">Trips</p>
-              <p class="active">Tokyo Weekend <small>travel</small></p>
-            </aside>
-            <article>
-              <div class="tags"><span class="chip">travel</span><span class="ai">✦ AI Tag</span></div>
-              <h2>Tokyo Weekend</h2>
-              <p>Land at Haneda on Friday evening and take the monorail into the city. The hotel is a short walk from a subway station in Yanaka.</p>
-              <p>Saturday is a slow walk through the neighborhood, a long lunch, and a bookstore that stays open late.</p>
-            </article>
+    <section class="journey" id="ownership" aria-labelledby="journey-title">
+      <div class="wrap">
+        <div class="journey-head">
+          <div><p class="section-label reveal">Built around ownership <span>04</span></p><h2 id="journey-title" class="reveal">Your notes. All the way down.</h2></div>
+          <p class="journey-lead reveal">Keep scrolling to follow a note from the filesystem to a fully offline workspace.</p>
+        </div>
+        <div class="journey-track" data-journey-track tabindex="0" aria-label="Product ownership journey">
+          <article class="journey-card"><header><span>01</span><small>Plain files</small></header><span class="card-icon" aria-hidden="true">.md</span><h3>Keep the file, not just the app.</h3><p>Each note is a real Markdown file. Inspect it, back it up, or place it in a folder your own sync service already covers.</p><span class="card-proof">Portable by default</span></article>
+          <article class="journey-card"><header><span>02</span><small>Private by architecture</small></header><span class="card-icon" aria-hidden="true">∅</span><h3>No account. No notes server.</h3><p>Laya Notes needs no login or cloud database. Your writing is never uploaded because there is nowhere in the product to upload it to.</p><span class="card-proof">Nothing to sign into</span></article>
+          <article class="journey-card"><header><span>03</span><small>Offline after setup</small></header><span class="card-icon" aria-hidden="true">⌁</span><h3>Unplug. Keep thinking.</h3><p>Download the local model once—about 1.6 GB—and Laya Notes keeps tagging and organizing without an internet connection.</p><span class="card-proof">On-device intelligence</span></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="download" id="download" aria-labelledby="download-title">
+      <div class="wrap">
+        <div class="download-grid">
+          <div class="download-copy">
+            <p class="section-label reveal">Take your notes home <span>05</span></p>
+            <h2 id="download-title" class="reveal">Online once.<br>Yours always.</h2>
+            <p class="reveal">Install Laya, download the local model once, then disconnect. The app, the intelligence, and every note remain with you.</p>
+            <div class="signal reveal" aria-hidden="true"><span class="signal-line"></span><span class="signal-pulse"></span><div class="signal-offline"><span>Connection optional</span></div></div>
           </div>
-        </figure>
-      </section>
-
-      <section id="how" class="grid">
-        <div>
-          <h3>Your notes are files</h3>
-          <p>
-            Each note is a <code>.md</code> file; each folder is a real folder. Open them in Finder or Explorer, back them up, or keep them in a folder your own
-            sync service already covers.
-          </p>
+          <div class="chooser reveal">
+            <div class="chooser-top"><span>Choose your system</span><span>Local install</span></div>
+            <div class="os-tabs" role="tablist" aria-label="Operating system">
+              <button class="os-tab" id="tab-mac" role="tab" aria-selected="true" aria-controls="panel-mac" data-os="mac">macOS</button>
+              <button class="os-tab" id="tab-windows" role="tab" aria-selected="false" aria-controls="panel-windows" data-os="windows" tabindex="-1">Windows</button>
+              <button class="os-tab" id="tab-linux" role="tab" aria-selected="false" aria-controls="panel-linux" data-os="linux" tabindex="-1">Linux</button>
+            </div>
+            <div class="os-panel" id="panel-mac" role="tabpanel" aria-labelledby="tab-mac"><h3>Laya Notes for macOS</h3><p>Apple Silicon · Disk image</p><a class="os-download" href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-mac-arm64.dmg"><span>Download .DMG</span><span aria-hidden="true">↓</span></a></div>
+            <div class="os-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" hidden><h3>Laya Notes for Windows</h3><p>64-bit · Setup installer</p><a class="os-download" href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-windows-x64-setup.exe"><span>Download Setup .EXE</span><span aria-hidden="true">↓</span></a></div>
+            <div class="os-panel" id="panel-linux" role="tabpanel" aria-labelledby="tab-linux" hidden><h3>Laya Notes for Linux</h3><p>Debian / Ubuntu · amd64 package</p><a class="os-download" href="https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-linux-amd64.deb"><span>Download .DEB</span><span aria-hidden="true">↓</span></a></div>
+            <div class="source-row"><span>Prefer to inspect the code?</span><a href="https://github.com/itsdula/laya-notes">View source on GitHub ↗</a></div>
+          </div>
         </div>
-        <div>
-          <h3>Tags are questions</h3>
-          <p>
-            A tag is a yes-or-no question, like “Is this note about a trip?” Laya answers every question for a note in one pass and keeps the tags it is
-            confident about.
-          </p>
+        <div class="offline-proof reveal">
+          <div class="proof"><strong>0</strong><span>accounts required</span></div>
+          <div class="proof"><strong>.md</strong><span>portable by default</span></div>
+          <div class="proof"><strong>∞</strong><span>offline notes after setup</span></div>
         </div>
-        <div>
-          <h3>Nothing to sign up for</h3>
-          <p>Install it and pick a folder. There is no account, no server and no subscription. Change the folder or the look of the app any time in Settings.</p>
-        </div>
-      </section>
+        <footer><p>© 2026 Laya Notes · MIT License</p><p>Local by default. Private by design.</p><p><a href="#top">Back to top ↑</a></p></footer>
+      </div>
+    </section>
+  </main>
 
-      <section id="privacy" class="privacy">
-        <h2>Your writing stays on your computer</h2>
-        <p>
-          The model that suggests tags runs inside the app. The only download is the model itself, about 1.6 GB, once per computer. After that, Laya
-          Notes works with no internet connection, and your notes are never uploaded anywhere.
-        </p>
-      </section>
-    </main>
+  <script>
+    (() => {
+      document.documentElement.classList.remove("no-js");
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+      const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 
-    <footer>
-      <p>Laya Notes uses <a href="https://huggingface.co/receptron/laya-onnx">Laya</a>, a decision model by Convai Innovations.</p>
-      <p><a href="https://github.com/itsdula/laya-notes">Source on GitHub</a> · MIT License</p>
-    </footer>
-  </body>
+      const reveals = document.querySelectorAll(".reveal");
+      if ("IntersectionObserver" in window && !reduce.matches) {
+        const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+          if (entry.isIntersecting) { entry.target.classList.add("visible"); observer.unobserve(entry.target); }
+        }), { threshold: .14 });
+        reveals.forEach(element => observer.observe(element));
+      } else reveals.forEach(element => element.classList.add("visible"));
+
+      const manifesto = document.querySelector(".manifesto");
+      const manifestoMeta = document.querySelector(".manifesto-meta");
+      if ("IntersectionObserver" in window && !reduce.matches) {
+        new IntersectionObserver(([entry]) => manifesto.classList.toggle("active", entry.isIntersecting), { threshold: .25 }).observe(manifesto);
+      } else manifesto.classList.add("active");
+
+      const scene = document.querySelector(".hero-scene");
+      const windows = [document.querySelector(".window-main"), document.querySelector(".window-back")];
+      const base = [
+        p => `translateZ(25px) rotateY(${-6+p.x*3}deg) rotateX(${2-p.y*2}deg) rotateZ(-1deg) translate3d(${p.x*7}px,${p.y*5}px,0)`,
+        p => `translateZ(-115px) rotateY(${-6+p.x*2}deg) rotateZ(4deg) translate3d(${-p.x*7}px,${-p.y*5}px,0)`
+      ];
+      const orbitTags = [...document.querySelectorAll("[data-orbit]")];
+      orbitTags.forEach(tag => tag.addEventListener("click", () => {
+        tag.setAttribute("aria-pressed", String(tag.getAttribute("aria-pressed") !== "true"));
+      }));
+      let pointer = { x:0, y:0 }, current = { x:0, y:0 }, sceneFrame = 0;
+      function renderScene() {
+        current.x += (pointer.x-current.x)*.09; current.y += (pointer.y-current.y)*.09;
+        windows.forEach((win,index) => win.style.transform = base[index](current));
+        orbitTags.forEach((tag,index) => { const pull = Number(tag.dataset.orbit)*620; tag.style.transform = `translate3d(${current.x*pull*(index%2?-1:1)}px,${current.y*pull}px,0)`; });
+        if (Math.abs(pointer.x-current.x)>.001 || Math.abs(pointer.y-current.y)>.001) sceneFrame=requestAnimationFrame(renderScene); else sceneFrame=0;
+      }
+      scene.addEventListener("pointermove", event => { if (reduce.matches) return; const rect=scene.getBoundingClientRect(); pointer={x:(event.clientX-rect.left)/rect.width-.5,y:(event.clientY-rect.top)/rect.height-.5}; if(!sceneFrame)sceneFrame=requestAnimationFrame(renderScene); });
+      scene.addEventListener("pointerleave", () => { pointer={x:0,y:0}; if(!sceneFrame)sceneFrame=requestAnimationFrame(renderScene); });
+
+      const steps = [...document.querySelectorAll("[data-story-step]")];
+      const machine = document.querySelector("[data-machine]");
+      let stage = -1, storyFrame = 0;
+      function setStage(next) {
+        if (next===stage) return; stage=next; machine.dataset.stage=String(next);
+        steps.forEach((step,index) => { const active=index===next; step.classList.toggle("active",active); step.setAttribute("aria-pressed",String(active)); });
+      }
+      function updateStory() {
+        const target=innerHeight*.48; let closest=0,distance=Infinity;
+        steps.forEach((step,index) => { const rect=step.getBoundingClientRect(); const d=Math.abs(rect.top+rect.height/2-target); if(d<distance){distance=d;closest=index;} });
+        setStage(closest); storyFrame=0;
+      }
+      steps.forEach((step,index) => step.addEventListener("click", () => { setStage(index); if(!reduce.matches)step.scrollIntoView({behavior:"smooth",block:"center"}); }));
+      addEventListener("scroll", () => { if(!storyFrame)storyFrame=requestAnimationFrame(updateStory); }, {passive:true});
+      setStage(reduce.matches ? 2 : 0);
+
+      const journey=document.querySelector(".journey"), track=document.querySelector("[data-journey-track]"), cards=[...document.querySelectorAll(".journey-card")];
+      let cardIndex=0;
+      function updateJourney() {
+        const rect=journey.getBoundingClientRect();
+        const verticalTravel=Math.max(1,journey.offsetHeight-innerHeight);
+        const progress=clamp(-rect.top/verticalTravel);
+        track.scrollLeft=progress*Math.max(0,track.scrollWidth-track.clientWidth);
+        cardIndex=Math.round(progress*(cards.length-1));
+      }
+      function scrollToCard(index) {
+        cardIndex=clamp(index,0,cards.length-1);
+        const progress=cards.length>1?cardIndex/(cards.length-1):0;
+        const top=journey.offsetTop+progress*Math.max(0,journey.offsetHeight-innerHeight);
+        scrollTo({top,behavior:reduce.matches?"auto":"smooth"});
+      }
+      track.addEventListener("keydown",event=>{
+        if(event.key==="ArrowRight"||event.key==="ArrowLeft"){
+          event.preventDefault();
+          scrollToCard(cardIndex+(event.key==="ArrowRight"?1:-1));
+        }
+      });
+      track.addEventListener("wheel",event=>{
+        if(Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
+        event.preventDefault();
+        const unit=event.deltaMode===1?16:event.deltaMode===2?innerHeight:1;
+        scrollBy({top:event.deltaY*unit,behavior:"auto"});
+      },{passive:false});
+      addEventListener("scroll",updateJourney,{passive:true});
+      addEventListener("resize",updateJourney,{passive:true});
+      updateJourney();
+
+      const tabs=[...document.querySelectorAll(".os-tab")], panels=[...document.querySelectorAll(".os-panel")];
+      function selectOS(os,focus=false) {
+        tabs.forEach(tab=>{const selected=tab.dataset.os===os;tab.setAttribute("aria-selected",String(selected));tab.tabIndex=selected?0:-1;if(selected&&focus)tab.focus();});
+        panels.forEach(panel=>panel.hidden=panel.id!==`panel-${os}`);
+      }
+      tabs.forEach((tab,index)=>{tab.addEventListener("click",()=>selectOS(tab.dataset.os));tab.addEventListener("keydown",event=>{if(!["ArrowRight","ArrowLeft","Home","End"].includes(event.key))return;event.preventDefault();let nextIndex=event.key==="Home"?0:event.key==="End"?tabs.length-1:(index+(event.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;selectOS(tabs[nextIndex].dataset.os,true);});});
+
+      const builds={mac:{label:"Download for macOS",url:"https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-mac-arm64.dmg"},windows:{label:"Download for Windows",url:"https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-windows-x64-setup.exe"},linux:{label:"Download for Linux",url:"https://github.com/itsdula/laya-notes/releases/latest/download/Laya-Notes-linux-amd64.deb"}};
+      const platform=(navigator.userAgentData?.platform||navigator.platform||"").toLowerCase(),ua=navigator.userAgent.toLowerCase(),mobile=navigator.userAgentData?.mobile||/iphone|ipad|ipod|android/.test(ua);
+      let os=null;if(!mobile&&(platform.includes("mac")||ua.includes("mac os"))&&navigator.maxTouchPoints<2)os="mac";else if(!mobile&&(platform.includes("win")||ua.includes("windows")))os="windows";else if(!mobile&&(platform.includes("linux")||ua.includes("linux")))os="linux";
+      if(os){selectOS(os);document.querySelectorAll("[data-primary-download]").forEach(link=>{link.href=builds[os].url;link.querySelector("[data-download-label]").textContent=builds[os].label;});}
+
+      let scrollFrame=0;
+      addEventListener("scroll",()=>{if(reduce.matches||scrollFrame)return;scrollFrame=requestAnimationFrame(()=>{const rect=manifesto.getBoundingClientRect(),p=clamp((innerHeight-rect.top)/(innerHeight+rect.height));manifestoMeta.children[0].style.setProperty("--drift",`${18-p*30}px`);manifestoMeta.children[1].style.setProperty("--drift",`${31-p*50}px`);scrollFrame=0;});},{passive:true});
+
+      const cursor=document.querySelector("[data-cursor]"),canCursor=matchMedia("(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)");
+      if(canCursor.matches){
+        document.documentElement.classList.add("has-cursor");let tx=-100,ty=-100,x=-100,y=-100,raf=0;
+        function draw(){x+=(tx-x)*.18;y+=(ty-y)*.18;cursor.style.transform=`translate3d(${x}px,${y}px,0) translate(-50%,-50%)`;if(Math.abs(tx-x)>.05||Math.abs(ty-y)>.05)raf=requestAnimationFrame(draw);else raf=0;}
+        addEventListener("pointermove",event=>{
+          tx=event.clientX;ty=event.clientY;cursor.classList.add("visible");
+          const image=event.target.closest?.(".window img");
+          cursor.classList.toggle("magnify",Boolean(image));
+          if(image){
+            const rect=image.getBoundingClientRect(),zoom=2.35,lensRadius=78;
+            const localX=clamp((event.clientX-rect.left)/rect.width);
+            const localY=clamp((event.clientY-rect.top)/rect.height);
+            const zoomWidth=rect.width*zoom,zoomHeight=rect.height*zoom;
+            cursor.style.backgroundImage=`url("${image.currentSrc}")`;
+            cursor.style.backgroundSize=`${zoomWidth}px ${zoomHeight}px`;
+            cursor.style.backgroundPosition=`${lensRadius-localX*zoomWidth}px ${lensRadius-localY*zoomHeight}px`;
+          }else{
+            cursor.style.backgroundImage="";
+          }
+          if(!raf)raf=requestAnimationFrame(draw);
+        },{passive:true});
+        document.addEventListener("pointerover",event=>cursor.classList.toggle("active",Boolean(event.target.closest("a,button,[data-journey-track]"))));
+        document.documentElement.addEventListener("mouseleave",()=>cursor.classList.remove("visible","active","magnify"));
+      }
+    })();
+  </script>
+</body>
 </html>
