@@ -109,9 +109,9 @@
       justify-content: space-between;
       padding: 22px clamp(20px,4vw,64px);
     }
-    .brand { display: inline-flex; align-items: center; gap: 11px; font-size: 15px; font-weight: 700; text-decoration: none; }
+    .brand { display: inline-flex; flex: none; align-items: center; gap: 11px; font-size: 15px; font-weight: 700; text-decoration: none; white-space: nowrap; }
     .brand img { width: 30px; height: 30px; border-radius: 8px; box-shadow: 0 6px 18px #0009; }
-    .site-nav { display: flex; align-items: center; gap: clamp(18px,3vw,34px); }
+    .site-nav { display: flex; flex: none; align-items: center; gap: clamp(18px,3vw,34px); }
     .site-nav a { color: #bdbdbd; font-size: 13px; text-decoration: none; transition: color .2s; }
     .site-nav a:hover { color: #fff; }
     .site-nav .nav-download { padding: 9px 14px; border: 1px solid #555; border-radius: 99px; color: #fff; }
@@ -139,7 +139,7 @@
       isolation: isolate;
     }
     .hero::after { content: ""; position: absolute; z-index: -2; inset: auto -10% -36% 30%; height: 70%; border: 1px solid #272727; border-radius: 50%; transform: rotate(-9deg); }
-    .hero-copy { z-index: 4; max-width: 590px; animation: enter .9s .1s both var(--ease); }
+    .hero-copy { z-index: 4; width: 100%; min-width: 0; max-width: 590px; animation: enter .9s .1s both var(--ease); }
     .hero .eyebrow { color: #fff; }
     h1 {
       margin: 0;
@@ -250,7 +250,7 @@
     .journey > .wrap { position: sticky; top: 0; display: flex; min-height: 100svh; flex-direction: column; justify-content: center; padding-block: 64px; }
     .journey-head { display: grid; grid-template-columns: 1.6fr .7fr; gap: 7vw; align-items: end; margin-bottom: 44px; }
     .journey-lead { max-width: 400px; margin: 0 0 8px; color: #aaa; }
-    .journey-track { position: relative; top: -24px; display: flex; gap: 22px; margin-right: calc((100vw - min(var(--max),calc(100vw - 48px)))/-2); padding: 12px max(22vw,260px) 28px 4px; overflow: hidden; scrollbar-width: none; }
+    .journey-track { position: relative; top: -24px; display: flex; gap: 22px; margin-right: calc((100vw - min(var(--max),calc(100vw - 48px)))/-2); padding: 12px 64px 28px 4px; overflow: hidden; scrollbar-width: none; }
     .journey-track::-webkit-scrollbar { display: none; }
     .journey-card { position: relative; flex: 0 0 clamp(600px,64vw,820px); min-height: 360px; padding: 34px; overflow: hidden; border: 1px solid #444; border-radius: 4px; background: #eee; color: #111; box-shadow: 10px 12px 0 #ffffff16; scroll-snap-align: start; transform: rotate(var(--rotation)); transition: transform .25s,box-shadow .25s; }
     .journey-card:nth-child(1) { --rotation:-1deg; } .journey-card:nth-child(2) { --rotation:1.2deg; background: #151515; color: #fff; } .journey-card:nth-child(3) { --rotation:-.7deg; background: #d2d2d2; }
@@ -292,6 +292,9 @@
     .proof span { color: #666; font-size: 13px; }
     footer { display: flex; justify-content: space-between; gap: 20px; padding: 32px 0; color: #666; font-size: 11px; }
     footer p { margin: 0; }
+    .diagnostics-panel { position: fixed; z-index: 9998; right: 14px; bottom: 14px; display: flex; align-items: center; gap: 12px; padding: 9px 10px 9px 13px; border: 1px solid #555; border-radius: 99px; background: #111e; color: #ddd; box-shadow: 0 12px 40px #0009; font: 10px/1 var(--mono); }
+    .diagnostics-panel span::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: #fff; animation: diagnostic-pulse 1.5s ease-in-out infinite; }
+    .diagnostics-panel button { padding: 7px 10px; border: 0; border-radius: 99px; background: #fff; color: #000; font: 700 10px/1 var(--mono); }
 
     .reveal { opacity: 0; transform: translateY(32px); transition: opacity .8s var(--ease),transform .8s var(--ease); }
     .reveal.visible,.no-js .reveal { opacity: 1; transform: none; }
@@ -300,6 +303,10 @@
     @keyframes ticker { to { transform: translateX(-50%); } }
     @keyframes scan { 0%,100% { transform: translateY(15px); } 50% { transform: translateY(380px); } }
     @keyframes travel { 0% { left: 0; } 58%,100% { left: 68%; } }
+    @keyframes mobile-main-breathe { 0%,100% { translate: 0 0; scale: 1; } 50% { translate: 0 -8px; scale: 1.015; } }
+    @keyframes mobile-back-breathe { 0%,100% { translate: 0 0; } 50% { translate: 5px 7px; } }
+    @keyframes mobile-orbit { 0%,100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+    @keyframes diagnostic-pulse { 50% { opacity: .35; } }
 
     @media (max-width: 980px) {
       .hero { height: auto; min-height: 0; grid-template-columns: 1fr; padding-top: 145px; }
@@ -312,12 +319,17 @@
     }
     @media (max-width: 720px) {
       .wrap { width: min(100% - 32px,620px); }
-      .site-header { padding: 18px 20px; }
+      .site-header { padding: 18px max(20px,env(safe-area-inset-right)) 18px max(20px,env(safe-area-inset-left)); }
       .site-nav a:not(.nav-download) { display: none; }
-      .hero { padding: 130px 20px 70px; }
-      h1 { font-size: clamp(54px,18vw,78px); }
-      .hero-scene { min-height: 440px; height: 108vw; margin-inline: -25px; }
-      .window-main { top: 25%; left: 2%; width: 96%; } .window-back { top: 5%; right: -2%; width: 72%; }
+      .hero { padding: 130px max(20px,env(safe-area-inset-right)) 70px max(20px,env(safe-area-inset-left)); }
+      .hero .eyebrow { font-size: 9px; letter-spacing: .1em; white-space: nowrap; }
+      h1 { font-size: clamp(48px,15vw,62px); }
+      .hero-lede { max-width: 100%; }
+      .trust { gap-inline: 12px; max-width: 100%; }
+      .trust span { white-space: nowrap; }
+      .hero-scene { min-height: 390px; height: 96vw; margin: 34px 0 0; }
+      .window-main { top: 25%; left: 4%; width: 92%; } .window-back { top: 5%; right: 3%; width: 70%; }
+      .t1 { left: 2%; } .t2 { right: 1%; } .t3 { left: 1%; }
       .orbit-tag { padding: 6px 8px; font-size: 8px; } .scroll-cue { display: none; }
       .manifesto { padding: 110px 20px 140px; }
       .manifesto-meta { grid-template-columns: 1fr; margin-left: 0; }
@@ -336,7 +348,7 @@
       .model-chip { top: 64px; right: 18px; width: 87px; height: 87px; } .model-chip strong { font-size: 17px; }
       .scan-line { top: 48px; left: 24px; width: 72%; }
       .story-tag { padding: 6px 9px; font-size: 9px; } .tag-a { top: 196px; right: 22px; } .tag-b { top: 252px; right: 65px; } .tag-c { top: 314px; right: 18px; }
-      .journey { height: 260vh; padding: 0; }
+      .journey { padding: 0; }
       .journey > .wrap { padding-block: 46px; }
       .journey-track { margin-right: -16px; padding-right: 40px; }
       .journey-track { top: -12px; }
@@ -348,11 +360,21 @@
       footer { flex-direction: column; }
     }
     @media (max-width: 430px) {
-      .hero-scene { min-height: 410px; }
+      .hero-scene { min-height: 360px; }
       .actions { align-items: flex-start; flex-direction: column; }
       .source { padding-left: 4px; }
-      .source-row { flex-direction: column; gap: 8px; }
+      .source-row { align-items: center; gap: 12px; }
+      .source-row span { line-height: 1.25; }
+      .source-row a { flex: none; text-align: right; white-space: nowrap; }
       .journey-card h3 { font-size: 42px; }
+    }
+    @media (max-width: 720px) and (hover:none) and (prefers-reduced-motion:no-preference) {
+      .window-main { animation: mobile-main-breathe 7s ease-in-out infinite; }
+      .window-back { animation: mobile-back-breathe 8.5s ease-in-out -2s infinite; }
+      .orbit-tag { animation: mobile-orbit 5.5s ease-in-out infinite; }
+      .orbit-tag:nth-of-type(2) { animation-delay: -1.4s; animation-duration: 6.4s; }
+      .orbit-tag:nth-of-type(3) { animation-delay: -3.1s; animation-duration: 7.2s; }
+      .orbit-tag:nth-of-type(4) { animation-delay: -4.3s; animation-duration: 6.8s; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -541,18 +563,28 @@
       setStage(reduce.matches ? 2 : 0);
 
       const journey=document.querySelector(".journey"), track=document.querySelector("[data-journey-track]"), cards=[...document.querySelectorAll(".journey-card")];
-      let cardIndex=0;
+      let cardIndex=0,journeyFrame=0,resizeFrame=0,journeyStart=0,journeyTravel=1,maxJourneyScroll=0;
+      function measureJourney() {
+        const lastCard=cards.at(-1);
+        maxJourneyScroll=Math.max(0,lastCard.offsetLeft+lastCard.offsetWidth-track.clientWidth+32);
+        journey.style.height=`${innerHeight+maxJourneyScroll}px`;
+        journeyStart=journey.offsetTop;
+        journeyTravel=Math.max(1,maxJourneyScroll);
+        updateJourney();
+      }
       function updateJourney() {
-        const rect=journey.getBoundingClientRect();
-        const verticalTravel=Math.max(1,journey.offsetHeight-innerHeight);
-        const progress=clamp(-rect.top/verticalTravel);
-        track.scrollLeft=progress*Math.max(0,track.scrollWidth-track.clientWidth);
+        const progress=clamp((scrollY-journeyStart)/journeyTravel);
+        track.scrollLeft=progress*maxJourneyScroll;
         cardIndex=Math.round(progress*(cards.length-1));
+        journeyFrame=0;
+      }
+      function requestJourneyUpdate() {
+        if(!journeyFrame)journeyFrame=requestAnimationFrame(updateJourney);
       }
       function scrollToCard(index) {
         cardIndex=clamp(index,0,cards.length-1);
         const progress=cards.length>1?cardIndex/(cards.length-1):0;
-        const top=journey.offsetTop+progress*Math.max(0,journey.offsetHeight-innerHeight);
+        const top=journeyStart+progress*journeyTravel;
         scrollTo({top,behavior:reduce.matches?"auto":"smooth"});
       }
       track.addEventListener("keydown",event=>{
@@ -561,15 +593,14 @@
           scrollToCard(cardIndex+(event.key==="ArrowRight"?1:-1));
         }
       });
-      track.addEventListener("wheel",event=>{
-        if(Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
-        event.preventDefault();
-        const unit=event.deltaMode===1?16:event.deltaMode===2?innerHeight:1;
-        scrollBy({top:event.deltaY*unit,behavior:"auto"});
-      },{passive:false});
-      addEventListener("scroll",updateJourney,{passive:true});
-      addEventListener("resize",updateJourney,{passive:true});
-      updateJourney();
+      addEventListener("scroll",requestJourneyUpdate,{passive:true});
+      addEventListener("resize",()=>{
+        if(resizeFrame)cancelAnimationFrame(resizeFrame);
+        resizeFrame=requestAnimationFrame(()=>{measureJourney();resizeFrame=0;});
+      },{passive:true});
+      measureJourney();
+      addEventListener("load",measureJourney,{once:true});
+      document.fonts?.ready.then(measureJourney);
 
       const tabs=[...document.querySelectorAll(".os-tab")], panels=[...document.querySelectorAll(".os-panel")];
       function selectOS(os,focus=false) {
@@ -588,27 +619,90 @@
 
       const cursor=document.querySelector("[data-cursor]"),canCursor=matchMedia("(hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference)");
       if(canCursor.matches){
-        document.documentElement.classList.add("has-cursor");let tx=-100,ty=-100,x=-100,y=-100,raf=0;
+        document.documentElement.classList.add("has-cursor");let tx=-100,ty=-100,x=-100,y=-100,raf=0,lensFrame=0;
         function draw(){x+=(tx-x)*.18;y+=(ty-y)*.18;cursor.style.transform=`translate3d(${x}px,${y}px,0) translate(-50%,-50%)`;if(Math.abs(tx-x)>.05||Math.abs(ty-y)>.05)raf=requestAnimationFrame(draw);else raf=0;}
+        function updateLens(){
+          lensFrame=0;
+          const hit=document.elementFromPoint(tx,ty);
+          const image=hit?.closest?.(".window img");
+          cursor.classList.toggle("magnify",Boolean(image));
+          cursor.classList.toggle("active",Boolean(hit?.closest("a,button,[data-journey-track]")));
+          if(!image){cursor.style.backgroundImage="";return;}
+          const rect=image.getBoundingClientRect(),zoom=2.35,lensRadius=78;
+          const localX=clamp((tx-rect.left)/rect.width);
+          const localY=clamp((ty-rect.top)/rect.height);
+          const zoomWidth=rect.width*zoom,zoomHeight=rect.height*zoom;
+          cursor.style.backgroundImage=`url("${image.currentSrc}")`;
+          cursor.style.backgroundSize=`${zoomWidth}px ${zoomHeight}px`;
+          cursor.style.backgroundPosition=`${lensRadius-localX*zoomWidth}px ${lensRadius-localY*zoomHeight}px`;
+        }
         addEventListener("pointermove",event=>{
           tx=event.clientX;ty=event.clientY;cursor.classList.add("visible");
-          const image=event.target.closest?.(".window img");
-          cursor.classList.toggle("magnify",Boolean(image));
-          if(image){
-            const rect=image.getBoundingClientRect(),zoom=2.35,lensRadius=78;
-            const localX=clamp((event.clientX-rect.left)/rect.width);
-            const localY=clamp((event.clientY-rect.top)/rect.height);
-            const zoomWidth=rect.width*zoom,zoomHeight=rect.height*zoom;
-            cursor.style.backgroundImage=`url("${image.currentSrc}")`;
-            cursor.style.backgroundSize=`${zoomWidth}px ${zoomHeight}px`;
-            cursor.style.backgroundPosition=`${lensRadius-localX*zoomWidth}px ${lensRadius-localY*zoomHeight}px`;
-          }else{
-            cursor.style.backgroundImage="";
-          }
+          updateLens();
           if(!raf)raf=requestAnimationFrame(draw);
         },{passive:true});
-        document.addEventListener("pointerover",event=>cursor.classList.toggle("active",Boolean(event.target.closest("a,button,[data-journey-track]"))));
-        document.documentElement.addEventListener("mouseleave",()=>cursor.classList.remove("visible","active","magnify"));
+        addEventListener("scroll",()=>{if(cursor.classList.contains("visible")&&!lensFrame)lensFrame=requestAnimationFrame(updateLens);},{passive:true});
+        document.documentElement.addEventListener("mouseleave",()=>{cursor.classList.remove("visible","active","magnify");cursor.style.backgroundImage="";});
+      }
+
+      if(new URLSearchParams(location.search).get("diagnostics")==="1"){
+        const workerSource=`
+          const events=[];let dropped=0;
+          onmessage=({data})=>{
+            if(data.type==="record"){
+              if(events.length>=12000){events.shift();dropped++;}
+              events.push(data.event);
+            }
+            if(data.type==="export")postMessage({type:"export",payload:{version:1,createdAt:new Date().toISOString(),dropped,events}});
+          };
+        `;
+        const workerUrl=URL.createObjectURL(new Blob([workerSource],{type:"text/javascript"}));
+        const diagnosticsWorker=new Worker(workerUrl);
+        URL.revokeObjectURL(workerUrl);
+        const targetName=target=>{
+          if(!(target instanceof Element))return "unknown";
+          return [target.tagName.toLowerCase(),target.id&&`#${target.id}`,[...target.classList].slice(0,2).map(name=>`.${name}`).join("")].filter(Boolean).join("");
+        };
+        const record=(type,data={})=>diagnosticsWorker.postMessage({type:"record",event:{t:Math.round(performance.now()*10)/10,type,...data}});
+        const panel=document.createElement("aside");
+        panel.className="diagnostics-panel";
+        panel.setAttribute("aria-label","Local diagnostics");
+        panel.innerHTML="<span>Local diagnostics</span><button type=\"button\">Export trace</button>";
+        document.body.append(panel);
+        panel.querySelector("button").addEventListener("click",()=>diagnosticsWorker.postMessage({type:"export"}));
+        diagnosticsWorker.onmessage=({data})=>{
+          if(data.type!=="export")return;
+          const link=document.createElement("a");
+          link.href=URL.createObjectURL(new Blob([JSON.stringify(data.payload,null,2)],{type:"application/json"}));
+          link.download=`laya-site-trace-${new Date().toISOString().replaceAll(":","-")}.json`;
+          link.click();
+          setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+        };
+        record("session",{viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},userAgent:navigator.userAgent,reducedMotion:reduce.matches});
+        let lastPointerSample=0,lastScrollSample=0,lastFrame=performance.now();
+        addEventListener("pointermove",event=>{
+          if(performance.now()-lastPointerSample<80)return;
+          lastPointerSample=performance.now();
+          record("pointer",{x:Math.round(event.clientX),y:Math.round(event.clientY),target:targetName(event.target)});
+        },{passive:true,capture:true});
+        addEventListener("wheel",event=>record("wheel",{x:Math.round(event.clientX),y:Math.round(event.clientY),deltaX:event.deltaX,deltaY:event.deltaY,deltaMode:event.deltaMode,target:targetName(event.target)}),{passive:true,capture:true});
+        addEventListener("scroll",()=>{
+          if(performance.now()-lastScrollSample<50)return;
+          lastScrollSample=performance.now();
+          record("scroll",{scrollY:Math.round(scrollY),journeyProgress:Number(clamp((scrollY-journeyStart)/journeyTravel).toFixed(4)),journeyScrollLeft:Math.round(track.scrollLeft)});
+        },{passive:true,capture:true});
+        addEventListener("resize",()=>record("resize",{width:innerWidth,height:innerHeight,dpr:devicePixelRatio}),{passive:true});
+        document.addEventListener("visibilitychange",()=>record("visibility",{state:document.visibilityState}));
+        try{
+          new PerformanceObserver(list=>list.getEntries().forEach(entry=>record("longtask",{start:Math.round(entry.startTime),duration:Math.round(entry.duration)}))).observe({type:"longtask",buffered:true});
+        }catch{}
+        function sampleFrames(now){
+          const duration=now-lastFrame;
+          if(duration>25)record("slow-frame",{duration:Number(duration.toFixed(1)),scrollY:Math.round(scrollY)});
+          lastFrame=now;
+          requestAnimationFrame(sampleFrames);
+        }
+        requestAnimationFrame(sampleFrames);
       }
     })();
   </script>
